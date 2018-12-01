@@ -10,45 +10,26 @@ pub fn run(part: i32, input: &str) {
 }
 
 fn sum_lines(input: Vec<i32>) -> i32 {
-    let mut sum = 0;
-    for i in input {
-        sum += i
-    }
-    return sum;
+    input.iter().sum()
 }
 
 fn first_reached_twice(input: Vec<i32>) -> i32 {
     let mut sum = 0;
-    let mut map = HashSet::new();
-    map.insert(sum);
+    let mut seen = HashSet::new();
+    seen.insert(sum);
 
-    loop {
-        for i in &input {
-            sum += i;
-            if map.contains(&sum) {
-                return sum;
-            }
-            map.insert(sum);
+    for i in input.iter().cycle() {
+        sum += i;
+        if seen.contains(&sum) {
+            return sum;
         }
+        seen.insert(sum);
     }
+    unreachable!();
 }
 
 fn parse_input(input: &str) -> Vec<i32> {
-    let mut vec = vec![];
-    let mut lines = input.lines();
-    loop {
-        match lines.next() {
-            Some(s) => {
-                match s.parse::<i32>() {
-                    Ok(i) => vec.push(i),
-                    Err(e) => {
-                        eprintln!("Parse error: {}: {}", s, e);
-                    }
-                }
-            },
-            None => return vec
-        }
-    }
+    input.lines().filter_map(|line| line.parse::<i32>().ok()).collect()
 }
 
 #[test]
