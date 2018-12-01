@@ -4,7 +4,7 @@ year=2018
 day=$1
 
 if [ "$day" = "" ]; then
-    day=$(TZ=US/Eastern date '+%d')
+    day=$(TZ=US/Eastern date '+%d' | sed 's/^0//')
 fi
 
 if ! git diff --exit-code > /dev/null; then
@@ -32,6 +32,6 @@ pub fn run(part: i32, input: &str) {
 fn test_run() {
 }
 EOF
-echo "Editing src/main/rs"
+echo "Editing src/main.rs"
 echo "mod day$day;" >> src/main.rs
 sed -i "0,/.*not implemented.*/s//        $day => day${day}::run(part, \&input),\n&/" src/main.rs

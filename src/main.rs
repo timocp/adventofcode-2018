@@ -22,7 +22,9 @@ fn main() {
     f.read_to_string(&mut input).unwrap();
 
     match day {
+        1 => day1::run(part, &input),
         _ => eprintln!("Day {} not implemented", day)
     };
 }
 
+mod day1;
