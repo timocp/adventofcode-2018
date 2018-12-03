@@ -1,3 +1,5 @@
+extern crate regex;
+
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
@@ -24,9 +26,11 @@ fn main() {
     match day {
         1 => day1::run(part, &input),
         2 => day2::run(part, &input),
+        3 => day3::run(part, &input),
         _ => eprintln!("Day {} not implemented", day)
     };
 }
 
 mod day1;
 mod day2;
+mod day3;
