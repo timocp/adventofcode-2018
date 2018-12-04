@@ -1,26 +1,59 @@
 use regex::Regex;
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
 pub fn run(part: i32, input: &str) {
     let claims = parse_input(input);
+    let mut fabric = HashMap::new();
+    let overlapping_squares = process(&mut fabric, &claims);
     if part == 1 {
-        println!("{}", overlapping_squares(claims));
+        println!("{}", overlapping_squares);
+    } else {
+        println!("{}", intact_claim(&fabric, &claims));
     }
 }
 
-fn overlapping_squares(claims: Vec<Claim>) -> i32 {
-    let mut fabric = [[0; 1000]; 1000];
-    let mut count = 0;
+fn process(fabric: &mut HashMap<(usize,usize), Square>, claims: &Vec<Claim>) -> i32 {
+    let mut overlap_count = 0;
     for claim in claims {
         for x in claim.left..(claim.left + claim.width) {
             for y in claim.top..(claim.top + claim.height) {
-                fabric[x][y] += 1;
-                if fabric[x][y] == 2 {
-                    count += 1;
+                match fabric.entry((x, y)) {
+                    Entry::Occupied(ent) => {
+                        let sq = ent.into_mut();
+                        if !sq.overlaps {
+                            overlap_count += 1;
+                            sq.overlaps = true;
+                        }
+                        sq.content = claim.id;
+                    },
+                    Entry::Vacant(ent) => {
+                        ent.insert(Square{content: claim.id, overlaps: false});
+                    }
                 }
             }
         }
     }
-    count
+    return overlap_count
+}
+
+fn intact_claim(fabric: &HashMap<(usize, usize), Square>, claims: &Vec<Claim>) -> usize {
+    'claim: for claim in claims {
+        for x in claim.left..(claim.left + claim.width) {
+            for y in claim.top..(claim.top + claim.height) {
+                match fabric.get(&(x, y)) {
+                    Some(sq) => {
+                        if sq.overlaps {
+                            continue 'claim;
+                        }
+                    },
+                    None => {}
+                }
+            }
+        }
+        return claim.id;
+    }
+    0
 }
 
 fn parse_input(input: &str) -> Vec<Claim> {
@@ -49,6 +82,12 @@ struct Claim {
     top: usize,
     width: usize,
     height: usize
+}
+
+#[derive(Copy, Clone)]
+struct Square {
+    content: usize,
+    overlaps: bool
 }
 
 #[test]
