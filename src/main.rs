@@ -30,6 +30,7 @@ fn main() {
         2 => day2::run(part, &input),
         3 => day3::run(part, &input),
         4 => day4::run(part, &input),
+        5 => day5::run(part, &input),
         _ => eprintln!("Day {} not implemented", day)
     };
 }
@@ -38,3 +39,4 @@ mod day1;
 mod day2;
 mod day3;
 mod day4;
+mod day5;
