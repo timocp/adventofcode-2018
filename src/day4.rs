@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use time::Duration;
 
 pub fn run(part: i32, input: &str) {
-    let events = parse_input(input);
-    let result = strategy1(&events);
+    let stats = collect_stats(&parse_input(input));
+    let result = if part == 1 { strategy1(&stats) } else { strategy2(&stats) };
     println!("{}", result.0 * result.1);
 }
 
@@ -19,8 +19,8 @@ struct Event {
     observation: Observation
 }
 
-fn strategy1(events: &Vec<Event>) -> (i32, i32) {
-    let mut stats: HashMap<i32, (i32, [i32; 60])> = HashMap::new(); // (totalAsleep, sleepsPerMinute)
+fn collect_stats(events: &Vec<Event>) -> HashMap<i32, (i32, [i32; 60])> {
+    let mut stats = HashMap::new(); // (totalAsleep, sleepsPerMinute)
     let mut guard = 0;
     let mut slept_at: i32 = 0;
     for e in events {
@@ -41,7 +41,10 @@ fn strategy1(events: &Vec<Event>) -> (i32, i32) {
             }
         }
     }
+    stats
+}
 
+fn strategy1(stats: &HashMap<i32, (i32, [i32; 60])>) -> (i32, i32) {
     // guard with highest total minutes asleep
     let (sleepy, stat) = stats.iter().max_by_key(|(_k, v)| v.0).unwrap();
     let mut most_sleepy = 0;
@@ -54,6 +57,20 @@ fn strategy1(events: &Vec<Event>) -> (i32, i32) {
     }
 
     (*sleepy, most_sleepy_at)
+}
+
+fn strategy2(stats: &HashMap<i32, (i32, [i32; 60])>) -> (i32, i32) {
+    let mut most_sleepy: (i32, i32) = (0, 0); // guard#,  min
+    let mut most_times = 0;
+    for (guard, stat) in stats.iter() {
+        for (min, times) in stat.1.iter().enumerate() {
+            if *times > most_times {
+                most_sleepy = (*guard, min as i32);
+                most_times = *times;
+            }
+        }
+    }
+    most_sleepy
 }
 
 fn parse_input(input: &str) -> Vec<Event> {
@@ -101,6 +118,7 @@ fn test_run() {
 [1518-11-05 00:03] Guard #99 begins shift
 [1518-11-05 00:45] falls asleep
 [1518-11-05 00:55] wakes up";
-    let events = parse_input(test_input);
-    assert_eq!((10, 24), strategy1(&events));
+    let stats = collect_stats(&parse_input(test_input));
+    assert_eq!((10, 24), strategy1(&stats));
+    assert_eq!((99, 45), strategy2(&stats));
 }
