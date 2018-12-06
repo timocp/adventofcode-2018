@@ -1,3 +1,6 @@
+use std::collections::VecDeque;
+use std::iter::FromIterator;
+
 pub fn run(part: i32, input: &str) {
     if part == 1 {
         println!("{}", react(input).len());
@@ -7,14 +10,14 @@ pub fn run(part: i32, input: &str) {
 }
 
 fn react(input: &str) -> String {
-    let mut chars = input.as_bytes().to_vec();
-    if chars[chars.len() - 1] == 10 {
-        chars.pop();
+    let mut chars = VecDeque::from_iter(input.chars());
+    if *chars.get(chars.len() - 1).unwrap() == '\n' {
+        chars.pop_back();
     }
     loop {
         let mut found = None;
         for (i, c) in chars.iter().skip(1).enumerate() {
-            if is_pair(*c, chars[i]) {
+            if is_pair(*c, *chars.get(i).unwrap()) {
                 found = Some(i);
                 break;
             }
@@ -25,7 +28,7 @@ fn react(input: &str) -> String {
                 chars.remove(i);
             }
             None => {
-                return String::from_utf8(chars).unwrap();
+                return chars.into_iter().collect();
             }
         }
     }
@@ -51,8 +54,8 @@ fn shortest_polymer(input: &str) -> String {
     }
 }
 
-fn is_pair(a: u8, b: u8) -> bool {
-    a >= 97 && a <= 122 && b == a - 32 || a >= 65 && a <= 90 && b == a + 32
+fn is_pair(a: char, b: char) -> bool {
+    a != b && a.to_ascii_uppercase() == b.to_ascii_uppercase()
 }
 
 #[test]
