@@ -10,27 +10,21 @@ pub fn run(part: i32, input: &str) {
 }
 
 fn react(input: &str) -> String {
-    let mut chars = VecDeque::from_iter(input.chars());
-    if *chars.get(chars.len() - 1).unwrap() == '\n' {
-        chars.pop_back();
+    let mut input = VecDeque::from_iter(input.chars());
+    if *input.get(input.len() - 1).unwrap() == '\n' {
+        input.pop_back();
     }
+    let mut output = VecDeque::new();
+    output.push_front(input.pop_front().unwrap());
     loop {
-        let mut found = None;
-        for (i, c) in chars.iter().skip(1).enumerate() {
-            if is_pair(*c, *chars.get(i).unwrap()) {
-                found = Some(i);
-                break;
-            }
+        while !input.is_empty() && !output.is_empty() && is_pair(*input.front().unwrap(), *output.back().unwrap()) {
+            input.pop_front();
+            output.pop_back();
         }
-        match found {
-            Some(i) => {
-                chars.remove(i);
-                chars.remove(i);
-            }
-            None => {
-                return chars.into_iter().collect();
-            }
+        if input.is_empty() {
+            return output.into_iter().collect();
         }
+        output.push_back(input.pop_front().unwrap());
     }
 }
 
