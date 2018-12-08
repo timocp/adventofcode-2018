@@ -1,15 +1,15 @@
 use regex::Regex;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use super::{Part,Part::*};
 
-pub fn run(part: i32, input: &str) {
+pub fn run(part: Part, input: &str) {
     let claims = parse_input(input);
     let mut fabric = HashMap::new();
     let overlapping_squares = process(&mut fabric, &claims);
-    if part == 1 {
-        println!("{}", overlapping_squares);
-    } else {
-        println!("{}", intact_claim(&fabric, &claims));
+    match part {
+        One => println!("{}", overlapping_squares),
+        Two => println!("{}", intact_claim(&fabric, &claims))
     }
 }
 

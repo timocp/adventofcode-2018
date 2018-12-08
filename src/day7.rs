@@ -1,11 +1,11 @@
 use petgraph::Incoming;
 use petgraph::graphmap::DiGraphMap;
+use super::{Part,Part::*};
 
-pub fn run(part: i32, input: &str) {
-    if part == 1 {
-        println!("{}", get_order(parse_input(input)));
-    } else {
-        println!("{}", time_simulation(parse_input(input), 5, 60));
+pub fn run(part: Part, input: &str) {
+    match part {
+        One => println!("{}", get_order(parse_input(input))),
+        Two => println!("{}", time_simulation(parse_input(input), 5, 60))
     }
 }
 

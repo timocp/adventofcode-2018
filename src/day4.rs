@@ -1,10 +1,14 @@
 use chrono::prelude::*;
 use std::collections::HashMap;
+use super::{Part,Part::*};
 use time::Duration;
 
-pub fn run(part: i32, input: &str) {
+pub fn run(part: Part, input: &str) {
     let stats = collect_stats(&parse_input(input));
-    let result = if part == 1 { strategy1(&stats) } else { strategy2(&stats) };
+    let result = match part {
+        One => strategy1(&stats),
+        Two => strategy2(&stats)
+    };
     println!("{}", result.0 * result.1);
 }
 

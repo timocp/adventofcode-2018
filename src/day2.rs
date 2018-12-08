@@ -1,10 +1,10 @@
 use std::collections::HashMap;
+use super::{Part,Part::*};
 
-pub fn run(part: i32, input: &str) {
-    if part == 1 {
-        println!("{}", checksum(input.lines().collect()));
-    } else {
-        println!("{}", common_letters(input.lines().collect()));
+pub fn run(part: Part, input: &str) {
+    match part {
+        One => println!("{}", checksum(input.lines().collect())),
+        Two => println!("{}", common_letters(input.lines().collect()))
     }
 }
 

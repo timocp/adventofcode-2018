@@ -25,7 +25,13 @@ file input/day$day.txt
 # setup new rust module
 echo "Creating src/day$day.rs"
 cat > src/day$day.rs <<EOF
-pub fn run(part: i32, input: &str) {
+use super::{Part,Part::*};
+
+pub fn run(part: Part, input: &str) {
+    match part {
+        One => println!(),
+        Two => println!()
+    }
 }
 
 #[test]

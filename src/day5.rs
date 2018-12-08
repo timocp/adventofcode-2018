@@ -1,11 +1,11 @@
 use std::collections::VecDeque;
 use std::iter::FromIterator;
+use super::{Part,Part::*};
 
-pub fn run(part: i32, input: &str) {
-    if part == 1 {
-        println!("{}", react(input).len());
-    } else {
-        println!("{}", shortest_polymer(input).len());
+pub fn run(part: Part, input: &str) {
+    match part {
+        One => println!("{}", react(input).len()),
+        Two => println!("{}", shortest_polymer(input).len())
     }
 }
 
