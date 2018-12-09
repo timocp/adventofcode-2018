@@ -5,7 +5,7 @@ use std::collections::hash_map::Entry;
 pub fn run(part: Part, input: &str) {
     match part {
         One => println!("{}", largest_finite_area(&parse_input(input))),
-        Two => println!()
+        Two => println!("{}", safe_area(&parse_input(input), 10000))
     }
 }
 
@@ -47,18 +47,6 @@ fn largest_finite_area(coords: &Vec<Point>) -> usize {
         }
     }
 
-    // debug out
-    // for y in min.y..max.y+1 {
-    //     for x in min.x..max.x+1 {
-    //         let c = closest.get(&Point{x: x, y: y}).unwrap();
-    //         print!("{}", match c.coord {
-    //             Some(i) => (i + 65) as u8 as char,
-    //             None => '.'
-    //         });
-    //     }
-    //     println!()
-    // }
-
     // areas, Some(x) means finite area x, None means infinite
     let mut areas: Vec<Option<usize>> = vec![Some(0); coords.len()];
     for y in min.y..max.y+1 {
@@ -74,6 +62,24 @@ fn largest_finite_area(coords: &Vec<Point>) -> usize {
         }
     }
     areas.into_iter().filter_map(|area| area).max().unwrap()
+}
+
+fn safe_area(coords: &Vec<Point>, limit: usize) -> usize {
+    let (min, max) = box_size(coords);
+    let mut area = 0;
+    for x in min.x..max.x+1 {
+        'cell: for y in min.y..max.y+1 {
+            let mut distance = 0;
+            for coord in coords.iter() {
+                distance += ((coord.x - x).abs() + (coord.y - y).abs()) as usize;
+                if distance >= limit {
+                    continue 'cell;
+                }
+            }
+            area += 1;
+        }
+    }
+    area
 }
 
 fn box_size(coords: &Vec<Point>) -> (Point, Point) {
@@ -112,4 +118,5 @@ fn test_run() {
 5, 5
 8, 9";
     assert_eq!(17, largest_finite_area(&parse_input(test_input)));
+    assert_eq!(16, safe_area(&parse_input(test_input), 32));
 }
