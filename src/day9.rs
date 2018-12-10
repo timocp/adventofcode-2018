@@ -14,7 +14,7 @@ fn simulate_game(players: usize, last_marble: usize) -> usize {
     let mut scores = vec![0; players as usize];
     game.push_front(0);
 
-    for marble in 1..last_marble+1 {
+    for marble in 1..=last_marble {
         let player = (marble - 1) % players;
         if marble % 23 == 0 {
             scores[player] += marble;
@@ -41,7 +41,10 @@ fn shift(game: &mut VecDeque<usize>, times: i32, forward: bool) {
 }
 
 fn parse_input(input: &str) -> Vec<usize> {
-    input.split_whitespace().filter_map(|s| s.parse().ok()).collect()
+    input
+        .split_whitespace()
+        .filter_map(|s| s.parse().ok())
+        .collect()
 }
 
 #[test]

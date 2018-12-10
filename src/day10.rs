@@ -1,6 +1,6 @@
+use super::{Part, Part::*};
 use image::ImageBuffer;
 use regex::Regex;
-use super::{Part,Part::*};
 
 pub fn run(part: Part, input: &str) {
     match part {
@@ -8,21 +8,21 @@ pub fn run(part: Part, input: &str) {
             find_message(&mut parse_input(input), true);
             println!("Wrote day10.png containing answer.");
         }
-        Two => println!("{}", find_message(&mut parse_input(input), false))
+        Two => println!("{}", find_message(&mut parse_input(input), false)),
     }
 }
 
 #[derive(Clone, Copy, Debug)]
 struct Point {
     x: i64,
-    y: i64
+    y: i64,
 }
 
 #[derive(Clone, Copy)]
 struct Star {
     point: Point,
     dx: i64,
-    dy: i64
+    dy: i64,
 }
 
 fn find_message(stars: &mut Vec<Star>, write_image: bool) -> i32 {
@@ -96,19 +96,20 @@ fn boxsize(stars: &Vec<Star>) -> (Point, Point) {
 }
 
 fn parse_input(input: &str) -> Vec<Star> {
-    let re = Regex::new(r"^position=<\s*(-?\d+),\s*(-?\d+)> velocity=<\s*(-?\d+),\s*(-?\d+)>$").unwrap();
+    let re =
+        Regex::new(r"^position=<\s*(-?\d+),\s*(-?\d+)> velocity=<\s*(-?\d+),\s*(-?\d+)>$").unwrap();
     let mut stars = vec![];
     for line in input.lines() {
         match re.captures(line) {
-            Some(cap) => stars.push(Star{
-                            point: Point{
-                                x: cap[1].parse().unwrap(),
-                                y: cap[2].parse().unwrap()
-                            },
-                            dx: cap[3].parse().unwrap(),
-                            dy: cap[4].parse().unwrap()
-                        }),
-            None => eprintln!("parse error: {}", line)
+            Some(cap) => stars.push(Star {
+                point: Point {
+                    x: cap[1].parse().unwrap(),
+                    y: cap[2].parse().unwrap(),
+                },
+                dx: cap[3].parse().unwrap(),
+                dy: cap[4].parse().unwrap(),
+            }),
+            None => eprintln!("parse error: {}", line),
         }
     }
     stars

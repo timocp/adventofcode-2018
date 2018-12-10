@@ -5,7 +5,7 @@ use std::process;
 
 pub enum Part {
     One,
-    Two
+    Two,
 }
 
 fn main() {
@@ -41,11 +41,12 @@ fn main() {
         8 => day8::run(part, &input),
         9 => day9::run(part, &input),
         10 => day10::run(part, &input),
-        _ => eprintln!("Day {} not implemented", day)
+        _ => eprintln!("Day {} not implemented", day),
     };
 }
 
 mod day1;
+mod day10;
 mod day2;
 mod day3;
 mod day4;
@@ -54,4 +55,3 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
-mod day10;

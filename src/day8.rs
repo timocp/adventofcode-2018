@@ -1,15 +1,21 @@
-use super::{Part,Part::*};
+use super::{Part, Part::*};
 
 pub fn run(part: Part, input: &str) {
     let input = parse_input(input);
-    println!("{}", match part {
-        One => metadata_sum(&input),
-        Two => value(&input)
-    });
+    println!(
+        "{}",
+        match part {
+            One => metadata_sum(&input),
+            Two => value(&input),
+        }
+    );
 }
 
 fn parse_input(input: &str) -> Vec<usize> {
-    input.split(" ").filter_map(|s| s.trim().parse().ok()).collect()
+    input
+        .split(" ")
+        .filter_map(|s| s.trim().parse().ok())
+        .collect()
 }
 
 fn metadata_sum(input: &[usize]) -> usize {
@@ -23,7 +29,7 @@ fn value(input: &[usize]) -> usize {
 struct Info {
     used: usize,
     sum: usize,
-    value: usize
+    value: usize,
 }
 
 fn parse_tree(input: &[usize]) -> Info {
@@ -32,7 +38,7 @@ fn parse_tree(input: &[usize]) -> Info {
     let mut info = Info {
         used: 2,
         sum: 0,
-        value: 0
+        value: 0,
     };
     let mut children = vec![];
 

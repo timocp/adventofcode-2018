@@ -1,11 +1,11 @@
+use super::{Part, Part::*};
 use std::collections::VecDeque;
 use std::iter::FromIterator;
-use super::{Part,Part::*};
 
 pub fn run(part: Part, input: &str) {
     match part {
         One => println!("{}", react(input).len()),
-        Two => println!("{}", shortest_polymer(input).len())
+        Two => println!("{}", shortest_polymer(input).len()),
     }
 }
 
@@ -17,7 +17,10 @@ fn react(input: &str) -> String {
     let mut output = VecDeque::new();
     output.push_front(input.pop_front().unwrap());
     loop {
-        while !input.is_empty() && !output.is_empty() && is_pair(*input.front().unwrap(), *output.back().unwrap()) {
+        while !input.is_empty()
+            && !output.is_empty()
+            && is_pair(*input.front().unwrap(), *output.back().unwrap())
+        {
             input.pop_front();
             output.pop_back();
         }
@@ -35,16 +38,16 @@ fn remove_types(input: &str, uc: char) -> String {
 
 fn shortest_polymer(input: &str) -> String {
     let mut shortest: Option<String> = None;
-    for c in (b'A' .. b'Z').map(|c| c as char) {
+    for c in (b'A'..=b'Z').map(|c| c as char) {
         let r = react(&remove_types(input, c));
         shortest = match shortest {
             Some(s) => Some(if r.len() < s.len() { r } else { s }),
-            None => Some(r)
+            None => Some(r),
         }
     }
     match shortest {
         Some(s) => s,
-        None => "".to_string()
+        None => "".to_string(),
     }
 }
 

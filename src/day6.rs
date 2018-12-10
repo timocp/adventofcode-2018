@@ -1,24 +1,24 @@
-use super::{Part,Part::*};
-use std::collections::HashMap;
+use super::{Part, Part::*};
 use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 
 pub fn run(part: Part, input: &str) {
     match part {
         One => println!("{}", largest_finite_area(&parse_input(input))),
-        Two => println!("{}", safe_area(&parse_input(input), 10000))
+        Two => println!("{}", safe_area(&parse_input(input), 10000)),
     }
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 struct Point {
     x: i32,
-    y: i32
+    y: i32,
 }
 
 #[derive(Debug)]
 struct Closest {
     distance: usize,
-    coord: Option<usize>
+    coord: Option<usize>,
 }
 
 fn largest_finite_area(coords: &Vec<Point>) -> usize {
@@ -26,10 +26,10 @@ fn largest_finite_area(coords: &Vec<Point>) -> usize {
 
     let mut closest: HashMap<Point, Closest> = HashMap::new();
     for (c, coord) in coords.iter().enumerate() {
-        for x in min.x..max.x+1 {
-            for y in min.y..max.y+1 {
+        for x in min.x..=max.x {
+            for y in min.y..=max.y {
                 let distance = ((coord.x - x).abs() + (coord.y - y).abs()) as usize;
-                match closest.entry(Point{x: x, y: y}) {
+                match closest.entry(Point { x: x, y: y }) {
                     Entry::Occupied(ent) => {
                         let ent = ent.into_mut();
                         if distance < ent.distance {
@@ -40,7 +40,10 @@ fn largest_finite_area(coords: &Vec<Point>) -> usize {
                         }
                     }
                     Entry::Vacant(ent) => {
-                        ent.insert(Closest{distance: distance, coord: Some(c)});
+                        ent.insert(Closest {
+                            distance: distance,
+                            coord: Some(c),
+                        });
                     }
                 }
             }
@@ -49,9 +52,9 @@ fn largest_finite_area(coords: &Vec<Point>) -> usize {
 
     // areas, Some(x) means finite area x, None means infinite
     let mut areas: Vec<Option<usize>> = vec![Some(0); coords.len()];
-    for y in min.y..max.y+1 {
-        for x in min.x..max.x+1 {
-            let closest = closest.get(&Point{x: x, y: y}).unwrap();
+    for y in min.y..=max.y {
+        for x in min.x..=max.x {
+            let closest = closest.get(&Point { x: x, y: y }).unwrap();
             if let Some(c) = closest.coord {
                 if y == min.y || y == max.y || x == min.x || x == max.x {
                     areas[c] = None;
@@ -67,8 +70,8 @@ fn largest_finite_area(coords: &Vec<Point>) -> usize {
 fn safe_area(coords: &Vec<Point>, limit: usize) -> usize {
     let (min, max) = box_size(coords);
     let mut area = 0;
-    for x in min.x..max.x+1 {
-        'cell: for y in min.y..max.y+1 {
+    for x in min.x..=max.x {
+        'cell: for y in min.y..=max.y {
             let mut distance = 0;
             for coord in coords.iter() {
                 distance += ((coord.x - x).abs() + (coord.y - y).abs()) as usize;
@@ -104,7 +107,10 @@ fn parse_input(input: &str) -> Vec<Point> {
     let mut list = vec![];
     for line in input.lines() {
         let coords: Vec<_> = line.split(", ").filter_map(|s| s.parse().ok()).collect();
-        list.push(Point{x: coords[0], y: coords[1]});
+        list.push(Point {
+            x: coords[0],
+            y: coords[1],
+        });
     }
     list
 }

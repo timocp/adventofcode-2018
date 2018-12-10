@@ -1,10 +1,10 @@
+use super::{Part, Part::*};
 use std::collections::HashMap;
-use super::{Part,Part::*};
 
 pub fn run(part: Part, input: &str) {
     match part {
         One => println!("{}", checksum(input.lines().collect())),
-        Two => println!("{}", common_letters(input.lines().collect()))
+        Two => println!("{}", common_letters(input.lines().collect())),
     }
 }
 
@@ -34,7 +34,7 @@ fn common_letters(input: Vec<&str>) -> String {
         for id2 in input.iter().skip(i + 1) {
             match compare(id1, id2) {
                 Some(s) => return s,
-                None => ()
+                None => (),
             }
         }
     }
@@ -54,15 +54,29 @@ fn compare(a: &str, b: &str) -> Option<String> {
             mismatches = true;
         }
     }
-    if mismatches { Some(result) } else { None }
+    if mismatches {
+        Some(result)
+    } else {
+        None
+    }
 }
 
 #[test]
 fn test_checksum() {
-    assert_eq!(12, checksum(vec!["abcdef", "bababc", "abbcde", "abcccd", "aabcdd", "abcdee", "ababab"]));
+    assert_eq!(
+        12,
+        checksum(vec![
+            "abcdef", "bababc", "abbcde", "abcccd", "aabcdd", "abcdee", "ababab"
+        ])
+    );
 }
 
 #[test]
 fn test_common_letters() {
-    assert_eq!("fgij", common_letters(vec!["abcde", "fghij", "klmno", "pqrst", "fguij", "axcye", "wvxyz"]));
+    assert_eq!(
+        "fgij",
+        common_letters(vec![
+            "abcde", "fghij", "klmno", "pqrst", "fguij", "axcye", "wvxyz"
+        ])
+    );
 }

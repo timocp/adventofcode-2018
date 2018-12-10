@@ -1,12 +1,15 @@
+use super::{Part, Part::*};
 use std::collections::HashSet;
-use super::{Part,Part::*};
 
 pub fn run(part: Part, input: &str) {
     let input = parse_input(input);
-    println!("{}", match part {
-        One => sum_lines(input),
-        Two => first_reached_twice(input)
-    });
+    println!(
+        "{}",
+        match part {
+            One => sum_lines(input),
+            Two => first_reached_twice(input),
+        }
+    );
 }
 
 fn sum_lines(input: Vec<i32>) -> i32 {
@@ -29,7 +32,10 @@ fn first_reached_twice(input: Vec<i32>) -> i32 {
 }
 
 fn parse_input(input: &str) -> Vec<i32> {
-    input.lines().filter_map(|line| line.parse::<i32>().ok()).collect()
+    input
+        .lines()
+        .filter_map(|line| line.parse::<i32>().ok())
+        .collect()
 }
 
 #[test]

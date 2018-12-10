@@ -1,7 +1,7 @@
+use super::{Part, Part::*};
 use regex::Regex;
-use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use super::{Part,Part::*};
+use std::collections::HashMap;
 
 pub fn run(part: Part, input: &str) {
     let claims = parse_input(input);
@@ -9,11 +9,11 @@ pub fn run(part: Part, input: &str) {
     let overlapping_squares = process(&mut fabric, &claims);
     match part {
         One => println!("{}", overlapping_squares),
-        Two => println!("{}", intact_claim(&fabric, &claims))
+        Two => println!("{}", intact_claim(&fabric, &claims)),
     }
 }
 
-fn process(fabric: &mut HashMap<(usize,usize), Square>, claims: &Vec<Claim>) -> i32 {
+fn process(fabric: &mut HashMap<(usize, usize), Square>, claims: &Vec<Claim>) -> i32 {
     let mut overlap_count = 0;
     for claim in claims {
         for x in claim.left..(claim.left + claim.width) {
@@ -26,15 +26,18 @@ fn process(fabric: &mut HashMap<(usize,usize), Square>, claims: &Vec<Claim>) -> 
                             sq.overlaps = true;
                         }
                         sq.content = claim.id;
-                    },
+                    }
                     Entry::Vacant(ent) => {
-                        ent.insert(Square{content: claim.id, overlaps: false});
+                        ent.insert(Square {
+                            content: claim.id,
+                            overlaps: false,
+                        });
                     }
                 }
             }
         }
     }
-    return overlap_count
+    return overlap_count;
 }
 
 fn intact_claim(fabric: &HashMap<(usize, usize), Square>, claims: &Vec<Claim>) -> usize {
@@ -46,7 +49,7 @@ fn intact_claim(fabric: &HashMap<(usize, usize), Square>, claims: &Vec<Claim>) -
                         if sq.overlaps {
                             continue 'claim;
                         }
-                    },
+                    }
                     None => {}
                 }
             }
@@ -61,15 +64,14 @@ fn parse_input(input: &str) -> Vec<Claim> {
     let mut claims = vec![];
     for line in input.lines() {
         match re.captures(line) {
-            Some(cap) => 
-                claims.push(Claim{
-                    id: cap[1].parse().unwrap(),
-                    left: cap[2].parse().unwrap(),
-                    top: cap[3].parse().unwrap(),
-                    width: cap[4].parse().unwrap(),
-                    height: cap[5].parse().unwrap(),
-                }),
-            None => eprintln!("parse error: {}", line)
+            Some(cap) => claims.push(Claim {
+                id: cap[1].parse().unwrap(),
+                left: cap[2].parse().unwrap(),
+                top: cap[3].parse().unwrap(),
+                width: cap[4].parse().unwrap(),
+                height: cap[5].parse().unwrap(),
+            }),
+            None => eprintln!("parse error: {}", line),
         }
     }
     claims
@@ -81,15 +83,14 @@ struct Claim {
     left: usize,
     top: usize,
     width: usize,
-    height: usize
+    height: usize,
 }
 
 #[derive(Copy, Clone)]
 struct Square {
     content: usize,
-    overlaps: bool
+    overlaps: bool,
 }
 
 #[test]
-fn test_run() {
-}
+fn test_run() {}

@@ -1,13 +1,13 @@
+use super::{Part, Part::*};
 use chrono::prelude::*;
 use std::collections::HashMap;
-use super::{Part,Part::*};
 use time::Duration;
 
 pub fn run(part: Part, input: &str) {
     let stats = collect_stats(&parse_input(input));
     let result = match part {
         One => strategy1(&stats),
-        Two => strategy2(&stats)
+        Two => strategy2(&stats),
     };
     println!("{}", result.0 * result.1);
 }
@@ -15,12 +15,12 @@ pub fn run(part: Part, input: &str) {
 enum Observation {
     BeginsShift(i32),
     WakesUp,
-    FallsAsleep
+    FallsAsleep,
 }
 
 struct Event {
     time: NaiveDateTime,
-    observation: Observation
+    observation: Observation,
 }
 
 fn collect_stats(events: &Vec<Event>) -> HashMap<i32, (i32, [i32; 60])> {
@@ -31,7 +31,7 @@ fn collect_stats(events: &Vec<Event>) -> HashMap<i32, (i32, [i32; 60])> {
         match e.observation {
             Observation::BeginsShift(g) => {
                 guard = g;
-            },
+            }
             Observation::WakesUp => {
                 // from last event to here-1, guard was asleep
                 let entry = stats.entry(guard).or_insert((0, [0; 60]));
@@ -39,7 +39,7 @@ fn collect_stats(events: &Vec<Event>) -> HashMap<i32, (i32, [i32; 60])> {
                 for m in slept_at..(e.time.minute() as i32) {
                     entry.1[m as usize] += 1;
                 }
-            },
+            }
             Observation::FallsAsleep => {
                 slept_at = e.time.minute() as i32;
             }
@@ -82,8 +82,9 @@ fn parse_input(input: &str) -> Vec<Event> {
     for line in input.lines() {
         let mut dttm = NaiveDateTime::parse_from_str(
             line.chars().skip(1).take(16).collect::<String>().as_str(),
-            "%Y-%m-%d %H:%M"
-        ).unwrap();
+            "%Y-%m-%d %H:%M",
+        )
+        .unwrap();
         // assume things at 11pm are guards starting shifts. normalise them
         // to midnight.
         if dttm.hour() > 0 {
@@ -91,12 +92,27 @@ fn parse_input(input: &str) -> Vec<Event> {
         }
         let event = line.chars().skip(19).collect::<String>();
         if event.starts_with("Guard #") {
-            let guard: i32 = event.chars().skip(7).take_while(|c| c.is_digit(10)).collect::<String>().parse().unwrap();
-            events.push(Event{time: dttm, observation: Observation::BeginsShift(guard)});
+            let guard: i32 = event
+                .chars()
+                .skip(7)
+                .take_while(|c| c.is_digit(10))
+                .collect::<String>()
+                .parse()
+                .unwrap();
+            events.push(Event {
+                time: dttm,
+                observation: Observation::BeginsShift(guard),
+            });
         } else if event == "falls asleep" {
-            events.push(Event{time: dttm, observation: Observation::FallsAsleep});
+            events.push(Event {
+                time: dttm,
+                observation: Observation::FallsAsleep,
+            });
         } else if event == "wakes up" {
-            events.push(Event{time: dttm, observation: Observation::WakesUp});
+            events.push(Event {
+                time: dttm,
+                observation: Observation::WakesUp,
+            });
         }
     }
     events.sort_by_key(|e| e.time);

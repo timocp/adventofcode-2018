@@ -30,7 +30,7 @@ use super::{Part,Part::*};
 pub fn run(part: Part, input: &str) {
     match part {
         One => println!(),
-        Two => println!()
+        Two => println!(),
     }
 }
 

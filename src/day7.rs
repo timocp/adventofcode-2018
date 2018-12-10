@@ -1,11 +1,11 @@
-use petgraph::Incoming;
+use super::{Part, Part::*};
 use petgraph::graphmap::DiGraphMap;
-use super::{Part,Part::*};
+use petgraph::Incoming;
 
 pub fn run(part: Part, input: &str) {
     match part {
         One => println!("{}", get_order(parse_input(input))),
-        Two => println!("{}", time_simulation(parse_input(input), 5, 60))
+        Two => println!("{}", time_simulation(parse_input(input), 5, 60)),
     }
 }
 
@@ -21,7 +21,11 @@ fn get_order(mut g: DiGraphMap<char, ()>) -> String {
 fn time_simulation(mut g: DiGraphMap<char, ()>, num_workers: usize, base_time: usize) -> i32 {
     let mut seconds = 0;
     let mut workers: Vec<Option<(char, usize)>> = vec![None; num_workers];
-    let mut in_progress: Vec<char> = workers.iter().filter_map(|worker| *worker).map(|job| job.0).collect();
+    let mut in_progress: Vec<char> = workers
+        .iter()
+        .filter_map(|worker| *worker)
+        .map(|job| job.0)
+        .collect();
     loop {
         // assign jobs to idle workers
         let mut running = false;
@@ -60,7 +64,8 @@ fn next_step(g: &DiGraphMap<char, ()>) -> Option<char> {
 }
 
 fn next_step_except(g: &DiGraphMap<char, ()>, except: &Vec<char>) -> Option<char> {
-    let mut next: Vec<_> = g.nodes()
+    let mut next: Vec<_> = g
+        .nodes()
         .filter(|n| g.neighbors_directed(*n, Incoming).count() == 0)
         .filter(|n| !except.contains(n))
         .collect();
