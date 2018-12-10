@@ -1,37 +1,43 @@
+use super::{Part, Part::*};
 use std::collections::VecDeque;
-use super::{Part,Part::*};
 
 pub fn run(part: Part, input: &str) {
     let input = parse_input(input);
     match part {
         One => println!("{}", simulate_game(input[0], input[1])),
-        Two => println!("{}", simulate_game(input[0], input[1])),
+        Two => println!("{}", simulate_game(input[0], input[1] * 100)),
     }
 }
 
 fn simulate_game(players: usize, last_marble: usize) -> usize {
     let mut game: VecDeque<usize> = VecDeque::with_capacity(last_marble);
     let mut scores = vec![0; players as usize];
-    let mut current = 0;
     game.push_front(0);
+
     for marble in 1..last_marble+1 {
         let player = (marble - 1) % players;
         if marble % 23 == 0 {
             scores[player] += marble;
-            current = if current >= 7 { current - 7 } else { game.len() - (7 - current) };
-            scores[player] += game[current];
-            game.remove(current);
+            shift(&mut game, 7, false);
+            scores[player] += game.pop_front().unwrap();
         } else {
-            current = (current + 2) % game.len();
-            if current == 0 {
-                game.push_back(marble);
-                current = game.len() - 1;
-            } else {
-                game.insert(current, marble);
-            }
+            shift(&mut game, 2, true);
+            game.push_front(marble);
         }
     }
     *scores.iter().max().unwrap()
+}
+
+fn shift(game: &mut VecDeque<usize>, times: i32, forward: bool) {
+    for _ in 0..times {
+        if forward {
+            let item = game.pop_front().unwrap();
+            game.push_back(item);
+        } else {
+            let item = game.pop_back().unwrap();
+            game.push_front(item);
+        }
+    }
 }
 
 fn parse_input(input: &str) -> Vec<usize> {
