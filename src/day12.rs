@@ -1,14 +1,15 @@
 use super::{Part, Part::*};
 use std::collections::VecDeque;
+use std::fmt;
 
 pub fn run(part: Part, input: &str) {
     match part {
         One => println!("{}", part1(input, 20)),
-        Two => println!(),
+        Two => println!("{}", part2(input, 50000000000)),
     }
 }
 
-fn part1(input: &str, generations: i32) -> i32 {
+fn part1(input: &str, generations: i64) -> i64 {
     let (rules, mut s1) = parse_input(input);
     let mut s2 = State {
         plants: VecDeque::new(),
@@ -24,6 +25,29 @@ fn part1(input: &str, generations: i32) -> i32 {
         grow(rules, &s2, &mut s1);
         count += 1;
         if count == generations {
+            return s1.sum_pots();
+        }
+    }
+}
+
+fn part2(input: &str, generations: i64) -> i64 {
+    let (rules, mut s1) = parse_input(input);
+    let mut s2 = State {
+        plants: VecDeque::new(),
+        offset: 0,
+    };
+    let mut count = 0;
+    loop {
+        grow(rules, &s1, &mut s2);
+        count += 1;
+        if s1.plants == s2.plants {
+            s2.offset += (s2.offset - s1.offset) * (generations - count);
+            return s2.sum_pots();
+        }
+        grow(rules, &s2, &mut s1);
+        count += 1;
+        if s1.plants == s2.plants {
+            s1.offset += (s1.offset - s2.offset) * (generations - count);
             return s1.sum_pots();
         }
     }
@@ -60,10 +84,23 @@ fn parse_input(input: &str) -> (u32, State) {
     (rules, state)
 }
 
-#[derive(Debug)]
 struct State {
     plants: VecDeque<bool>,
-    offset: i32,
+    offset: i64,
+}
+
+impl fmt::Debug for State {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut s = String::new();
+        for (_, &b) in self.plants.iter().enumerate() {
+            if b {
+                s.push('#');
+            } else {
+                s.push('.');
+            }
+        }
+        write!(f, "<{}>[{}]", self.offset, s)
+    }
 }
 
 impl State {
@@ -88,16 +125,16 @@ impl State {
     }
 
     // earliest index you can ask for
-    fn start(&self) -> i32 {
+    fn start(&self) -> i64 {
         self.offset
     }
 
     // last index you can ask for
-    fn end(&self) -> i32 {
-        self.plants.len() as i32 + self.offset - 1
+    fn end(&self) -> i64 {
+        self.plants.len() as i64 + self.offset - 1
     }
 
-    fn get(&self, index: i32) -> bool {
+    fn get(&self, index: i64) -> bool {
         if index < self.offset || index > self.end() {
             false
         } else {
@@ -105,11 +142,11 @@ impl State {
         }
     }
 
-    fn set(&mut self, index: i32, b: bool) {
+    fn set(&mut self, index: i64, b: bool) {
         self.plants[(index - self.offset) as usize] = b;
     }
 
-    fn sum_pots(&self) -> i32 {
+    fn sum_pots(&self) -> i64 {
         let mut sum = 0;
         for i in self.start()..=self.end() {
             if self.get(i) {
