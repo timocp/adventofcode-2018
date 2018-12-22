@@ -6,7 +6,7 @@ pub fn run(part: Part, input: &str) {
     let mut mine = parse_input(input);
     match part {
         One => println!("{:?}", mine.first_crash()),
-        Two => println!(),
+        Two => println!("{:?}", mine.last_cart()),
     }
 }
 
@@ -87,24 +87,21 @@ struct Cart {
     y: usize,
     facing: Direction,
     next_turn: Turn,
+    destroyed: bool,
 }
 
 impl Cart {
     fn intersection_turn(&mut self) {
-        self.facing = match self.next_turn {
-            Turn::Left => match self.facing {
-                Direction::North => Direction::West,
-                Direction::East => Direction::North,
-                Direction::South => Direction::East,
-                Direction::West => Direction::South,
-            },
-            Turn::Right => match self.facing {
-                Direction::North => Direction::East,
-                Direction::East => Direction::South,
-                Direction::South => Direction::West,
-                Direction::West => Direction::North,
-            },
-            Turn::Straight => self.facing,
+        self.facing = match (self.next_turn, self.facing) {
+            (Turn::Left, Direction::North) => Direction::West,
+            (Turn::Left, Direction::East) => Direction::North,
+            (Turn::Left, Direction::South) => Direction::East,
+            (Turn::Left, Direction::West) => Direction::South,
+            (Turn::Right, Direction::North) => Direction::East,
+            (Turn::Right, Direction::East) => Direction::South,
+            (Turn::Right, Direction::South) => Direction::West,
+            (Turn::Right, Direction::West) => Direction::North,
+            (Turn::Straight, _) => self.facing,
         };
         self.next_turn = match self.next_turn {
             Turn::Left => Turn::Straight,
@@ -170,17 +167,47 @@ impl Mine {
                 self.carts[cart_id].move_turn(&self.map);
 
                 // has it crashed?
-                for (cart2_id, cart2) in self.carts.iter().enumerate() {
-                    if cart2_id != cart_id
-                        && self.carts[cart_id].x == cart2.x
-                        && self.carts[cart_id].y == cart2.y
-                    {
-                        return Position {
-                            x: cart2.x,
-                            y: cart2.y,
-                        };
-                    }
+                if self.detect_crash(cart_id) {
+                    return Position {
+                        x: self.carts[cart_id].x,
+                        y: self.carts[cart_id].y,
+                    };
                 }
+            }
+            self.carts.sort_by_key(|c| (c.y, c.x));
+        }
+    }
+
+    fn detect_crash(&mut self, this_id: usize) -> bool {
+        let this_x = self.carts[this_id].x;
+        let this_y = self.carts[this_id].y;
+        for (other_id, other) in self.carts.iter_mut().enumerate() {
+            if other_id == this_id {
+                continue;
+            }
+            if this_x == other.x && this_y == other.y {
+                other.destroyed = true;
+                return true;
+            }
+        }
+        false
+    }
+
+    fn last_cart(&mut self) -> Position {
+        loop {
+            for cart_id in 0..self.carts.len() {
+                self.carts[cart_id].move_turn(&self.map);
+
+                if self.detect_crash(cart_id) {
+                    self.carts[cart_id].destroyed = true;
+                }
+            }
+            self.carts.retain(|cart| !cart.destroyed);
+            if self.carts.len() == 1 {
+                return Position {
+                    x: self.carts[0].x,
+                    y: self.carts[0].y,
+                };
             }
             self.carts.sort_by_key(|c| (c.y, c.x));
         }
@@ -212,6 +239,7 @@ fn parse_input(input: &str) -> Mine {
                     y: y,
                     facing: Direction::from_char(c).unwrap(),
                     next_turn: Turn::Left,
+                    destroyed: false,
                 });
             } else if c == '-' {
                 mine.map[y][x] = Cell::EW;
@@ -233,15 +261,25 @@ mod tests {
         "/->-\\        \n|   |  /----\\\n| /-+--+-\\  |\n| | |  | v  |\n\\-+-/  \\-+--/\n  \\------/   \n"
     }
 
+    fn test_input2() -> &'static str {
+        "/>-<\\  \n|   |  \n| /<+-\\\n| | | v\n\\>+</ |\n  |   ^\n  \\<->/\n"
+    }
+
     #[test]
     fn test_parse_input() {
-        let mine = parse_input(test_input());
-        assert_eq!(format!("{:?}", mine), test_input());
+        assert_eq!(format!("{:?}", parse_input(test_input())), test_input());
+        assert_eq!(format!("{:?}", parse_input(test_input2())), test_input2());
     }
 
     #[test]
     fn test_first_crash() {
         let mut mine = parse_input(test_input());
         assert_eq!(Position { x: 7, y: 3 }, mine.first_crash());
+    }
+
+    #[test]
+    fn test_last_cart() {
+        let mut mine = parse_input(test_input2());
+        assert_eq!(Position { x: 6, y: 4 }, mine.last_cart());
     }
 }
