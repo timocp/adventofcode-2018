@@ -34,8 +34,17 @@ pub fn run(part: Part, input: &str) {
     }
 }
 
-#[test]
-fn test_run() {
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_input() -> &'static str {
+        ""
+    }
+
+    #[test]
+    fn test_run() {
+    }
 }
 EOF
 echo "Editing src/main.rs"
