@@ -1,8 +1,6 @@
 use self::Dir::*;
 use super::{Part, Part::*};
-use std::cmp;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fmt;
 use std::fmt::Write;
 use std::slice::Iter;
@@ -132,21 +130,11 @@ impl Dir {
         static DIRS: [Dir; 4] = [North, West, East, South];
         DIRS.into_iter()
     }
-
-    fn to_char(&self) -> char {
-        match self {
-            North => 'N',
-            West => 'W',
-            East => 'E',
-            South => 'S',
-        }
-    }
 }
 
 #[derive(Debug)]
-struct Node {
-    parent: usize,
-    dir: Dir,
+struct Path {
+    start_dir: Dir,
     pos: Pos,
     inrange: bool,
 }
@@ -243,83 +231,70 @@ impl Game {
             return;
         }
 
-        // build a tree of paths as a breadth first search.
-        // each row in the tree is implemented as a vector.
-        let mut tree: Vec<Vec<Node>> = vec![vec![Node {
-            parent: 0,
-            dir: North,
+        // build up a BFS, but we only need to retain the deepest node of each
+        // path.  each path remembers its starting step so that ties can be
+        // separated.
+        // note that the ordering of the directions is used to ensure we only
+        // follow the correctly ordered path to any target square.
+        let mut paths: Vec<Path> = vec![Path {
+            start_dir: North, // ignored
             pos: unit.pos,
             inrange: false,
-        }]];
+        }];
 
-        // hash to record length of best known path to any position, which
-        // is used to prune loops and detect inability to move
-        let mut seen: HashMap<Pos, usize> = HashMap::new();
+        // set to record length of best known path to any position, which
+        // is used to prune loops and detect inability to move.
+        let mut seen = HashSet::new();
 
         let mut stop = false;
         let mut depth = 0;
         while !stop {
             // build a new vector which is the next layer of the tree
             depth += 1;
-            let mut row: Vec<Node> = vec![];
-            for (parent, node) in tree[depth - 1].iter().enumerate() {
+            let mut new_paths: Vec<Path> = vec![];
+            for old_path in paths.into_iter() {
                 for dir in Dir::each() {
-                    let pos = node.pos.step(*dir);
-                    match seen.entry(pos) {
-                        Entry::Occupied(_) => continue,
-                        Entry::Vacant(entry) => entry.insert(depth),
-                    };
+                    let pos = old_path.pos.step(*dir);
+                    if seen.contains(&pos) {
+                        continue;
+                    }
+                    seen.insert(pos);
                     if self.is_empty(pos) {
                         let inrange = self.in_range(pos, unit.other());
                         if inrange {
                             stop = true;
                         }
-                        row.push(Node {
-                            parent,
-                            dir: *dir,
+                        new_paths.push(Path {
+                            start_dir: if depth == 1 { *dir } else { old_path.start_dir },
                             pos,
                             inrange,
                         });
                     }
                 }
             }
-            if row.is_empty() {
+            if new_paths.is_empty() {
                 if self.debug {
                     print!("Unit {} has no path to targets.", u);
                 }
                 return;
             }
-            tree.push(row);
+            paths = new_paths;
         }
 
-        // choose the target tile (min is reading order)
-        let target_tile = tree[tree.len() - 1]
+        let target_tile = paths
             .iter()
             .filter(|node| node.inrange)
             .map(|node| node.pos)
             .min()
             .unwrap();
 
-        // Work out which direction to step; it is the smallest reading-order
-        // out of all paths which lead to the target tile.
-        let mut dir = South;
-        for node in tree[tree.len() - 1]
+        // there should only be one remaining path to the target square, so
+        // move in that direction.
+        let dir = paths
             .iter()
-            .filter(|node| node.pos == target_tile)
-        {
-            if tree.len() == 2 {
-                dir = cmp::min(dir, node.dir);
-            } else {
-                let mut parent = node.parent;
-                for depth in (1..tree.len() - 1).rev() {
-                    if depth == 1 {
-                        dir = cmp::min(dir, tree[depth][parent].dir);
-                    } else {
-                        parent = tree[depth][parent].parent;
-                    }
-                }
-            }
-        }
+            .find(|node| node.pos == target_tile)
+            .unwrap()
+            .start_dir;
 
         if self.debug {
             print!(
