@@ -8,17 +8,18 @@ use std::fmt::Write;
 use std::slice::Iter;
 
 pub fn run(part: Part, input: &str) {
-    let mut game = Game::new(input);
-    match part {
+    let game = match part {
         One => {
-            game.simulate();
-            println!("{}", game.rounds * game.total_hp());
+            let mut game = Game::new(input);
+            game.simulate(None);
+            game
         }
-        Two => println!(),
-    }
+        Two => Game::help_elves(input),
+    };
+    println!("{}", game.rounds * game.total_hp());
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Team {
     Elves,
     Goblins,
@@ -89,6 +90,7 @@ struct Unit {
     hp: u8,
     pos: Pos,
     team: Team,
+    power: u8,
 }
 
 impl Unit {
@@ -112,6 +114,8 @@ struct Game {
     units: Vec<Unit>,
     rounds: u32,
     debug: bool,
+    elf_power: u8,
+    winner: Option<Team>,
 }
 
 // Order is important for derived ordering (NWES is reading order)
@@ -154,6 +158,8 @@ impl Game {
             units: vec![],
             rounds: 0,
             debug: false,
+            elf_power: 3,
+            winner: None,
         };
         for (y, line) in input.lines().enumerate() {
             game.map.push(vec![Tile::Open; line.len()]);
@@ -168,6 +174,7 @@ impl Game {
                         team: if c == 'E' { Team::Elves } else { Team::Goblins },
                         hp: 200,
                         pos: Pos { x, y },
+                        power: 3,
                     })
                 }
             }
@@ -175,13 +182,28 @@ impl Game {
         game
     }
 
-    fn simulate(&mut self) {
+    // part 2, brute-force the minimal attack strength elves would need to win
+    fn help_elves(input: &str) -> Game {
+        let mut elf_power = 3;
+        loop {
+            elf_power += 1;
+            let mut game = Game::new(input);
+            game.set_elf_power(elf_power);
+            game.simulate(Some(Team::Elves));
+            if game.winner == Some(Team::Elves) {
+                return game;
+            }
+        }
+    }
+
+    fn simulate(&mut self, require_total_victory: Option<Team>) {
         loop {
             if self.debug {
                 print!("After {} round(s)\n{:?}", self.rounds, self);
             }
             for u in 0..self.units.len() {
                 if self.is_victory(&self.units[u].team) {
+                    self.winner = Some(self.units[u].team);
                     if self.debug {
                         println!("Unit {} sees the battlefield is clear. Victory!", u);
                     }
@@ -189,6 +211,15 @@ impl Game {
                 }
                 self.move_unit(u);
                 self.attack(u);
+            }
+            if let Some(team) = require_total_victory {
+                if self
+                    .units
+                    .iter()
+                    .any(|unit| unit.team == team && !unit.is_alive())
+                {
+                    return;
+                }
             }
             self.units.retain(|unit| unit.is_alive());
             self.sort_units();
@@ -329,19 +360,31 @@ impl Game {
         let min_hp = enemies.iter().map(|(_, enemy)| enemy.hp).min().unwrap();
         enemies.retain(|(_, enemy)| enemy.hp == min_hp);
         let target = enemies.iter().min_by_key(|(_, enemy)| enemy.pos).unwrap().0;
+        let power = self.units[u].power;
         if self.debug {
-            print!("  Attacks unit {}.", target);
+            print!("  Attacks unit {} with power {}.", target, power);
         }
-        if self.units[target].hp > 3 {
+        if self.units[target].hp > power {
             if self.debug {
                 println!();
             }
-            self.units[target].hp -= 3;
+            self.units[target].hp -= power;
         } else {
             if self.debug {
                 println!("  It dies!");
             }
             self.units[target].hp = 0;
+        }
+    }
+
+    fn set_elf_power(&mut self, elf_power: u8) {
+        self.elf_power = elf_power;
+        for elf in self
+            .units
+            .iter_mut()
+            .filter(|unit| unit.team == Team::Elves)
+        {
+            elf.power = elf_power;
         }
     }
 
@@ -639,7 +682,25 @@ mod tests {
         .iter()
         {
             let mut game = Game::new(input);
-            game.simulate();
+            game.simulate(None);
+            assert_eq!(expected_rounds, game.rounds);
+            assert_eq!(expected_total_hp, game.total_hp());
+        }
+    }
+
+    #[test]
+    fn test_help_elves() {
+        for &(input, expected_elf_power, expected_rounds, expected_total_hp) in [
+            (test_input4(), 15, 29, 172),
+            (test_input6(), 4, 33, 948),
+            (test_input7(), 15, 37, 94),
+            (test_input8(), 12, 39, 166),
+            (test_input9(), 34, 30, 38),
+        ]
+        .iter()
+        {
+            let game = Game::help_elves(input);
+            assert_eq!(expected_elf_power, game.elf_power);
             assert_eq!(expected_rounds, game.rounds);
             assert_eq!(expected_total_hp, game.total_hp());
         }
