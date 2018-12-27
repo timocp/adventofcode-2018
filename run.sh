@@ -1,6 +1,6 @@
 #! /bin/sh
 
-cargo test && cargo build --release || exit 1
+cargo build --release || exit 1
 
 if [ ! -z "$1" ]; then
     ./target/release/adventofcode-2018 $@
