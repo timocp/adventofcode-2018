@@ -1,9 +1,10 @@
 use self::Op::*;
 use super::{Part, Part::*};
+use std::collections::HashSet;
 use std::slice::Iter;
 
 pub fn run(part: Part, input: &str) {
-    let (samples, _program) = parse_input(input);
+    let (samples, program) = parse_input(input);
     match part {
         One => println!(
             "{}",
@@ -12,11 +13,15 @@ pub fn run(part: Part, input: &str) {
                 .filter(|sample| sample.probe().len() >= 3)
                 .count()
         ),
-        Two => println!(),
+        Two => {
+            let mut vm = Device::new();
+            vm.run_program(&reverse_engineer(&samples), &program);
+            println!("{}", vm.reg[0]);
+        }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Op {
     Addr,
     Addi,
@@ -54,6 +59,12 @@ struct Device {
 impl Device {
     fn new() -> Device {
         Device { reg: [0, 0, 0, 0] }
+    }
+
+    fn run_program(&mut self, map: &Vec<Op>, program: &Vec<Inst>) {
+        for inst in program.iter() {
+            self.exec(map[inst.opcode], inst.a, inst.b, inst.c);
+        }
     }
 
     #[rustfmt::skip]
@@ -97,27 +108,75 @@ impl Sample {
         }
     }
 
-    // return list of opcodes which this sample could match
-    fn probe(&self) -> Vec<Op> {
-        let mut results = vec![];
+    // return set of opcodes which this sample could match
+    fn probe(&self) -> HashSet<Op> {
+        let mut results = HashSet::new();
         for op in Op::each() {
             let mut vm = self.before.clone();
             vm.exec(*op, self.instr[1], self.instr[2], self.instr[3] as usize);
             if vm == self.after {
-                results.push(*op);
+                results.insert(*op);
             }
         }
         results
     }
 }
 
-// placeholder for part 2
-struct Program {}
+fn reverse_engineer(samples: &Vec<Sample>) -> Vec<Op> {
+    // an array of sets of possible matching opcodes, indexed by the input opcode
+    let mut maybe: Vec<HashSet<Op>> = vec![HashSet::new(); 16];
+    for sample in samples {
+        let opcode = sample.instr[0];
+        let couldbe = sample.probe();
+        if maybe[opcode].is_empty() {
+            maybe[opcode] = couldbe;
+        } else {
+            // in-place intersect
+            maybe[opcode].retain(|op| couldbe.contains(op));
+        }
+    }
 
-fn parse_input(input: &str) -> (Vec<Sample>, Program) {
+    // some opcodes are now know.  remove them from the possibilities of others.
+    // repeat until no unknowns.
+    let mut done = false;
+    let mut elim: Vec<bool> = vec![false; 16];
+    while !done {
+        done = true;
+        for i in 0..maybe.len() {
+            if maybe[i].len() == 1 && !elim[i] {
+                elim[i] = true;
+                let op = maybe[i].iter().nth(0).unwrap().clone();
+                for j in 0..maybe.len() {
+                    if i != j {
+                        if maybe[j].remove(&op) {
+                            done = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // each maybe is now a set of 1
+    maybe
+        .iter()
+        .map(|set| *set.iter().nth(0).unwrap())
+        .collect()
+}
+
+#[derive(Debug)]
+struct Inst {
+    opcode: usize,
+    a: usize,
+    b: usize,
+    c: usize,
+}
+
+fn parse_input(input: &str) -> (Vec<Sample>, Vec<Inst>) {
     let mut samples = vec![];
     let mut sample = Sample::new();
     let mut in_samples = true;
+    let mut program = vec![];
     for line in input.lines() {
         if line.starts_with("Before: [") {
             in_samples = true;
@@ -133,14 +192,22 @@ fn parse_input(input: &str) -> (Vec<Sample>, Program) {
             samples.push(sample.clone());
             in_samples = false;
         } else if line.len() > 0 {
-            for (i, n) in parse_numbers(&line, " ").into_iter().enumerate() {
-                if in_samples {
+            let numbers = parse_numbers(&line, " ");
+            if in_samples {
+                for (i, n) in numbers.into_iter().enumerate() {
                     sample.instr[i] = n;
                 }
+            } else {
+                program.push(Inst {
+                    opcode: numbers[0],
+                    a: numbers[1],
+                    b: numbers[2],
+                    c: numbers[3],
+                });
             }
         }
     }
-    (samples, Program {})
+    (samples, program)
 }
 
 fn parse_numbers(input: &str, delim: &str) -> Vec<usize> {
@@ -164,6 +231,10 @@ mod tests {
     #[test]
     fn test_probe() {
         let (samples, _program) = parse_input(test_input());
-        assert_eq!(vec![Addi, Mulr, Seti], samples[0].probe());
+        let mut expected = HashSet::new();
+        expected.insert(Addi);
+        expected.insert(Mulr);
+        expected.insert(Seti);
+        assert_eq!(expected, samples[0].probe());
     }
 }
